@@ -1,17 +1,21 @@
 const path = require('path')
 const webpack = require('webpack')
 const CleanWebpackPlugin = require('clean-webpack-plugin')
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
 
 let theme_name = 'webpack4wp'
 
 module.exports = {
   entry: {
-    main: path.join(__dirname, "src", 'app'),
+    main: [
+      path.join(__dirname, "src", 'app'),
+      path.join(__dirname, "src", 'sass/main.scss')
+    ],
     vendor: [
-      'jquery',
-      'swiper',
-      'tether',
-      'bootstrap'
+      'script-loader!jquery',
+      'script-loader!tether',
+      'script-loader!bootstrap',
+      'script-loader!swiper'
     ]
   },
   output: {
@@ -19,7 +23,9 @@ module.exports = {
     filename: "[name].bundle.js"
   },
   module: {
-    rules: [{
+    rules: [
+      // Javascript
+      {
         test: /\.js$/,
         use: {
           loader: 'babel-loader',
@@ -32,6 +38,7 @@ module.exports = {
           }
         }
       },
+      // CSS
       {
         test: /\.css$/,
         use: [
@@ -39,34 +46,39 @@ module.exports = {
           'css-loader'
         ]
       },
+      // SASS
       {
         test: /\.scss$/,
-        use: [
-          'style-loader',
-          {
-            loader: 'css-loader',
-            options: {
-              importLoaders: 1
-            }
-          },
-          'postcss-loader',
-          'sass-loader'
-        ]
+        use: ExtractTextPlugin.extract({
+          fallback: 'style-loader',
+          use: [
+            {
+              loader: 'css-loader',
+              options: {
+                importLoaders: 1
+              }
+            },
+            'postcss-loader',
+            'sass-loader'
+          ]
+        })
       },
+      // Images
       {
         test: /\.(png|svg|jpg|gif)$/,
+        exclude: /node_modules/, // resolve regex conflict with font loader
         use: [
           'file-loader'
         ]
       },
+      // Font Awesome
       {
         test: /.(ttf|otf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
         use: [{
           loader: 'file-loader',
           options: {
-            name: '[name].[ext]',
-            outputPath: 'fonts/', // where the fonts will go
-            publicPath: `/wp-content/themes/${theme_name}/dist/` // override the default path
+            outputPath: 'fonts/',
+            publicPath: '../'
           }
         }]
       }
@@ -76,17 +88,20 @@ module.exports = {
     new CleanWebpackPlugin('./dist'),
     new webpack.optimize.CommonsChunkPlugin({
       name: 'vendor',
-      filename: 'vendor.js'
+      filename: 'vendor.bundle.js'
     }),
     new webpack.optimize.CommonsChunkPlugin({
       names: 'runtime',
-      filename: 'runtime.js'
+      filename: 'runtime.bundle.js'
     }),
+    new ExtractTextPlugin('css/[name].css'),
     new webpack.ProvidePlugin({
       $: 'jquery',
       jQuery: 'jquery',
       'window.jQuery': 'jquery',
-      'Tether': 'tether'
+      tether: 'tether',
+      Tether: 'tether',
+      'window.Tether': 'tether',
     })
   ]
 }

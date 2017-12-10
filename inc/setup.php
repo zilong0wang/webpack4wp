@@ -75,10 +75,11 @@ function Webpack4WP_scripts()
 {
 	// add styles
 	wp_enqueue_style( 'style', get_stylesheet_uri() );
+	wp_enqueue_style( 'main_style', get_template_directory_uri() . '/dist/css/main.css', array('style'));
 
 	// add scripts
-	wp_enqueue_script( 'runtime', get_template_directory_uri() . '/dist/runtime.js', array('jquery'), '1.0.0', false );
-	wp_enqueue_script( 'vendor', get_template_directory_uri() . '/dist/vendor.js', array('runtime'), '1.0.0', false );
+	wp_enqueue_script( 'runtime', get_template_directory_uri() . '/dist/runtime.bundle.js', array('jquery'), '1.0.0', false );
+	wp_enqueue_script( 'vendor', get_template_directory_uri() . '/dist/vendor.bundle.js', array('runtime'), '1.0.0', false );
 	wp_enqueue_script( 'main', get_template_directory_uri() . '/dist/main.bundle.js', array('vendor'), '1.0.0', false );
 }
 add_action( 'wp_enqueue_scripts', 'Webpack4WP_scripts' );
