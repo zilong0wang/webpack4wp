@@ -2,13 +2,28 @@ const path = require('path')
 const webpack = require('webpack')
 const CleanWebpackPlugin = require('clean-webpack-plugin')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
-let theme_name = 'webpack4wp'
+const theme_name = 'webpack4wp'
+const babelLoader = {
+    loader: 'babel-loader',
+    options: {
+        cacheDirectory: true,
+        presets: [
+            ["@babel/preset-env", {
+                "targets": {
+                    "browsers": ["last 2 versions", "safari >= 7"]
+                },
+                "modules": false
+            }]
+        ]
+    }
+};
 
 module.exports = {
     entry: {
         main: [
-            path.join(__dirname, "src", 'app'),
+            path.join(__dirname, "src", 'javascript/index'),
             path.join(__dirname, "src", 'sass/main.scss')
         ],
         vendor: [
@@ -18,25 +33,33 @@ module.exports = {
             'script-loader!swiper'
         ]
     },
+    resolve: {
+        extensions: ['.tsx', '.ts', '.js', 'json']
+    },
     output: {
         path: path.join(__dirname, "dist"),
         filename: "[name].bundle.js"
     },
     module: {
         rules: [
+            // Typescript
+            {
+                test: /\.tsx?$/,
+                exclude: /node_modules/,
+                use: [
+                    babelLoader,
+                    {
+                        loader: 'ts-loader'
+                    }
+                ]
+            },
             // Javascript
             {
                 test: /\.js$/,
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        presets: [
-                            ['env', {
-                                modules: false
-                            }]
-                        ]
-                    }
-                }
+                exclude: /node_modules/,
+                use: [
+                    'babelLoader'
+                ]
             },
             // CSS
             {
@@ -51,13 +74,9 @@ module.exports = {
                 test: /\.scss$/,
                 use: ExtractTextPlugin.extract({
                     fallback: 'style-loader',
-                    use: [{
-                            loader: 'css-loader',
-                            options: {
-                                importLoaders: 1
-                            }
-                        },
-                        'postcss-loader',
+                    use: [
+                        'css-loader',
+                        "postcss-loader",
                         'sass-loader'
                     ]
                 })
@@ -66,9 +85,13 @@ module.exports = {
             {
                 test: /\.(png|svg|jpg|gif)$/,
                 exclude: /node_modules/, // resolve regex conflict with font loader
-                use: [
-                    'file-loader'
-                ]
+                use: [{
+                    loader: 'file-loader',
+                    options: {
+                        outputPath: 'images/',
+                        publicPath: '../'
+                    }
+                }]
             },
             // Font Awesome
             {
@@ -94,13 +117,17 @@ module.exports = {
             filename: 'runtime.bundle.js'
         }),
         new ExtractTextPlugin('css/[name].css'),
+        new CopyWebpackPlugin([{
+            from: path.resolve(__dirname, 'assets/images'),
+            to: path.resolve(__dirname, 'dist/images')
+        }]),
         new webpack.ProvidePlugin({
             $: 'jquery',
             jQuery: 'jquery',
             'window.jQuery': 'jquery',
             tether: 'tether',
             Tether: 'tether',
-            'window.Tether': 'tether',
+            'window.Tether': 'tether'
         })
     ]
 }
